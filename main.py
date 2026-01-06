@@ -1,22 +1,28 @@
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 import os
 
 TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-# Главное меню — кнопки под стартом
+# Главное меню (кнопки внизу)
 def main_menu():
-    kb = InlineKeyboardMarkup(row_width=2)
+    kb = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
     kb.add(
-        InlineKeyboardButton("📊 Полезные таблицы", callback_data="tables"),
-        InlineKeyboardButton("🏠 Базы и Фишки", callback_data="bases"),
-        InlineKeyboardButton("🌟 Таланты", callback_data="talents"),
-        InlineKeyboardButton("🏢 База операции", callback_data="operation"),
-        InlineKeyboardButton("🖥 Калькулятор LIOS", callback_data="calculator"),
-        InlineKeyboardButton("💎 Донат LIOS", callback_data="donate")
+        KeyboardButton("📊 Полезные таблицы"),
+        KeyboardButton("🏠 Базы и Фишки"),
+        KeyboardButton("🌟 Таланты"),
+        KeyboardButton("🏢 База операции"),
+        KeyboardButton("🖥 Калькулятор LIOS"),
+        KeyboardButton("💎 Донат LIOS")
     )
+    return kb
+
+# Кнопка «Главное меню» для разделов
+def back_to_menu():
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    kb.add(KeyboardButton("⬅️ Главное меню"))
     return kb
 
 # Команда /start
@@ -27,50 +33,41 @@ async def start(message: types.Message):
         reply_markup=main_menu()
     )
 
-# Обработка нажатий кнопок
-@dp.callback_query_handler(lambda c: True)
-async def process_callback(callback_query: types.CallbackQuery):
-    data = callback_query.data
+# Обработка текстовых сообщений с меню
+@dp.message_handler(lambda message: True)
+async def menu_handler(message: types.Message):
+    text = message.text
 
-    # Внутренние разделы
-    if data == "tables":
-        await callback_query.message.edit_text(
-            "📊 **Полезные таблицы**:\n"
-            "- Крафт предметов\n"
-            "- Ресурсы\n"
-            "- Оружие и броня",
-            reply_markup=main_menu()
-        )
-    elif data == "bases":
-        await callback_query.message.edit_text(
-            "🏠 **Базы и Фишки**:\n"
-            "- Лучшие места для постройки\n"
-            "- Защита от рейдов\n"
-            "- Полезные трюки",
-            reply_markup=main_menu()
-        )
-    elif data == "talents":
-        await callback_query.message.edit_text(
-            "🌟 **Таланты**:\n"
-            "- Лучшие навыки для PvP\n"
-            "- Комбо для рейдов",
-            reply_markup=main_menu()
-        )
-    elif data == "operation":
-        await callback_query.message.edit_text(
-            "🏢 **База операции**:\n"
-            "- Организация базы для рейдов\n"
-            "- Оптимизация защиты",
+    if text == "⬅️ Главное меню":
+        await message.answer(
+            "🏝 Главное меню:",
             reply_markup=main_menu()
         )
 
-    # Калькулятор LIOS через Web App
-    elif data == "calculator":
-        # Сначала сообщение с инструкцией
-        await callback_query.message.answer(
-            "Нажмите кнопку ниже, чтобы открыть калькулятор LIOS:"
+    elif text == "📊 Полезные таблицы":
+        await message.answer(
+            "📊 **Полезные таблицы**:\n- Крафт предметов\n- Ресурсы\n- Оружие и броня",
+            reply_markup=back_to_menu()
         )
-        # Кнопка под сообщением с Web App
+    elif text == "🏠 Базы и Фишки":
+        await message.answer(
+            "🏠 **Базы и Фишки**:\n- Лучшие места для постройки\n- Защита от рейдов\n- Полезные трюки",
+            reply_markup=back_to_menu()
+        )
+    elif text == "🌟 Таланты":
+        await message.answer(
+            "🌟 **Таланты**:\n- Лучшие навыки для PvP\n- Комбо для рейдов",
+            reply_markup=back_to_menu()
+        )
+    elif text == "🏢 База операции":
+        await message.answer(
+            "🏢 **База операции**:\n- Организация базы для рейдов\n- Оптимизация защиты",
+            reply_markup=back_to_menu()
+        )
+    elif text == "🖥 Калькулятор LIOS":
+        # Сначала текст с инструкцией
+        await message.answer("Нажмите кнопку ниже, чтобы открыть калькулятор LIOS:")
+        # Кнопка Web App
         kb = InlineKeyboardMarkup()
         kb.add(
             InlineKeyboardButton(
@@ -78,13 +75,9 @@ async def process_callback(callback_query: types.CallbackQuery):
                 web_app=WebAppInfo(url="https://sultanovandreym-source.github.io/lis-raid-calc/")
             )
         )
-        await callback_query.message.answer("👇", reply_markup=kb)
-
-    # Донат LIOS (ссылка открывается через стандартную кнопку)
-    elif data == "donate":
-        await callback_query.message.answer(
-            "💎 Нажмите кнопку ниже для доната:"
-        )
+        await message.answer("👇", reply_markup=kb)
+    elif text == "💎 Донат LIOS":
+        await message.answer("💎 Нажмите кнопку ниже для доната:")
         kb = InlineKeyboardMarkup()
         kb.add(
             InlineKeyboardButton(
@@ -92,8 +85,7 @@ async def process_callback(callback_query: types.CallbackQuery):
                 url="https://store.herogame.com/lios"
             )
         )
-        await callback_query.message.answer("👇", reply_markup=kb)
+        await message.answer("👇", reply_markup=kb)
 
-# Запуск бота
 if __name__ == "__main__":
     executor.start_polling(dp)
