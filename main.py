@@ -1,12 +1,12 @@
 from aiogram import Bot, Dispatcher, executor, types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 import os
 
 TOKEN = os.getenv("BOT_TOKEN")
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
 
-# Главное меню — все кнопки под стартом
+# Главное меню — кнопки под стартом
 def main_menu():
     kb = InlineKeyboardMarkup(row_width=2)
     kb.add(
@@ -32,42 +32,68 @@ async def start(message: types.Message):
 async def process_callback(callback_query: types.CallbackQuery):
     data = callback_query.data
 
+    # Внутренние разделы
     if data == "tables":
         await callback_query.message.edit_text(
-            "📊 Полезные таблицы:\n- Крафт предметов\n- Ресурсы\n- Оружие и броня",
+            "📊 **Полезные таблицы**:\n"
+            "- Крафт предметов\n"
+            "- Ресурсы\n"
+            "- Оружие и броня",
             reply_markup=main_menu()
         )
     elif data == "bases":
         await callback_query.message.edit_text(
-            "🏠 Базы и Фишки:\n- Лучшие места для постройки\n- Защита от рейдов\n- Полезные трюки",
+            "🏠 **Базы и Фишки**:\n"
+            "- Лучшие места для постройки\n"
+            "- Защита от рейдов\n"
+            "- Полезные трюки",
             reply_markup=main_menu()
         )
     elif data == "talents":
         await callback_query.message.edit_text(
-            "🌟 Таланты:\n- Лучшие навыки для PvP\n- Комбо для рейдов",
+            "🌟 **Таланты**:\n"
+            "- Лучшие навыки для PvP\n"
+            "- Комбо для рейдов",
             reply_markup=main_menu()
         )
     elif data == "operation":
         await callback_query.message.edit_text(
-            "🏢 База операции:\n- Организация базы для рейдов\n- Оптимизация защиты",
+            "🏢 **База операции**:\n"
+            "- Организация базы для рейдов\n"
+            "- Оптимизация защиты",
             reply_markup=main_menu()
         )
+
+    # Калькулятор LIOS через Web App
     elif data == "calculator":
         # Сначала сообщение с инструкцией
         await callback_query.message.answer(
             "Нажмите кнопку ниже, чтобы открыть калькулятор LIOS:"
         )
-        # Кнопка под сообщением
+        # Кнопка под сообщением с Web App
         kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton("Открыть калькулятор", url="https://sultanovandreym-source.github.io/lis-raid-calc/"))
+        kb.add(
+            InlineKeyboardButton(
+                "Открыть калькулятор",
+                web_app=WebAppInfo(url="https://sultanovandreym-source.github.io/lis-raid-calc/")
+            )
+        )
         await callback_query.message.answer("👇", reply_markup=kb)
+
+    # Донат LIOS (ссылка открывается через стандартную кнопку)
     elif data == "donate":
         await callback_query.message.answer(
             "💎 Нажмите кнопку ниже для доната:"
         )
         kb = InlineKeyboardMarkup()
-        kb.add(InlineKeyboardButton("Перейти в Донат LIOS", url="https://store.herogame.com/lios"))
+        kb.add(
+            InlineKeyboardButton(
+                "Перейти в Донат LIOS",
+                url="https://store.herogame.com/lios"
+            )
+        )
         await callback_query.message.answer("👇", reply_markup=kb)
 
+# Запуск бота
 if __name__ == "__main__":
     executor.start_polling(dp)
